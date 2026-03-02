@@ -364,6 +364,34 @@
 
     <div class="msg" id="msg"><p class="mt" id="msgT"></p><p class="mx" id="msgX"></p></div>
 
+    <!-- MANUAL CITY SELECTOR (shown when GPS fails) -->
+    <div class="msg" id="cityPicker" style="display:none;">
+      <p class="mt">📍 בחרו את המיקום שלכם</p>
+      <p class="mx" style="margin-bottom:12px;">לא הצלחנו לזהות את המיקום שלכם אוטומטית. זה יכול לקרות כשגולשים מתוך אפליקציה או כשהדפדפן לא מקבל הרשאת מיקום.</p>
+      <div style="background:var(--mint-light);border:1px solid rgba(126,205,181,0.3);border-radius:10px;padding:12px;margin-bottom:14px;text-align:right;font-size:12px;color:var(--mint-deep);line-height:1.7;">
+        💡 <strong>איך לתקן?</strong><br>
+        • ודאו ששירותי המיקום דלוקים בהגדרות הטלפון<br>
+        • בדקו שלדפדפן (Chrome / Safari) יש הרשאת מיקום:<br>
+        &nbsp;&nbsp;הגדרות → פרטיות → שירותי מיקום → הדפדפן שלכם<br>
+        • נסו לפתוח את הקישור ישירות בדפדפן (לא מתוך אפליקציה אחרת)
+      </div>
+      <p class="mx" style="margin-bottom:10px;font-weight:600;">או בחרו עיר מהרשימה:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <button class="rbtn" onclick="manualLoc(32.0853,34.7818,'תל אביב')" style="padding:10px;font-size:13px;">תל אביב</button>
+        <button class="rbtn" onclick="manualLoc(31.7683,35.2137,'ירושלים')" style="padding:10px;font-size:13px;">ירושלים</button>
+        <button class="rbtn" onclick="manualLoc(32.794,34.9896,'חיפה')" style="padding:10px;font-size:13px;">חיפה</button>
+        <button class="rbtn" onclick="manualLoc(31.2529,34.7915,'באר שבע')" style="padding:10px;font-size:13px;">באר שבע</button>
+        <button class="rbtn" onclick="manualLoc(32.3215,34.8532,'נתניה')" style="padding:10px;font-size:13px;">נתניה</button>
+        <button class="rbtn" onclick="manualLoc(31.8928,34.8113,'אשדוד')" style="padding:10px;font-size:13px;">אשדוד</button>
+        <button class="rbtn" onclick="manualLoc(32.1633,34.8458,'פתח תקווה')" style="padding:10px;font-size:13px;">פתח תקווה</button>
+        <button class="rbtn" onclick="manualLoc(31.6658,34.5664,'אשקלון')" style="padding:10px;font-size:13px;">אשקלון</button>
+        <button class="rbtn" onclick="manualLoc(32.0167,34.7500,'חולון')" style="padding:10px;font-size:13px;">חולון</button>
+        <button class="rbtn" onclick="manualLoc(32.0878,34.8878,'בני ברק')" style="padding:10px;font-size:13px;">בני ברק</button>
+        <button class="rbtn" onclick="manualLoc(31.9500,34.8000,'ראשון לציון')" style="padding:10px;font-size:13px;">ראשון לציון</button>
+        <button class="rbtn" onclick="manualLoc(31.4117,34.3642,'שדרות')" style="padding:10px;font-size:13px;">שדרות</button>
+      </div>
+    </div>
+
     <div class="sg" id="sg">
       <div class="sc"><div class="sc-i">🏗️</div><div class="sc-v" id="sC">0</div><div class="sc-l">מקלטים נמצאו</div></div>
       <div class="sc"><div class="sc-i">📏</div><div class="sc-v" id="sD">--</div><div class="sc-l">מטר לקרוב</div></div>
@@ -439,7 +467,18 @@ let map,uLat,uLon,shelters=[],mks=[],uMk,rad=200,rName='מרכז',rSec=90,dInt;
 
 function toast(m){const t=document.getElementById('tst');t.textContent=m;t.classList.add('sh');setTimeout(()=>t.classList.remove('sh'),2500);}
 function showMsg(t,x){document.getElementById('msgT').textContent=t;document.getElementById('msgX').textContent=x;document.getElementById('msg').classList.add('on');}
-function hideMsg(){document.getElementById('msg').classList.remove('on');}
+function hideMsg(){document.getElementById('msg').classList.remove('on');document.getElementById('cityPicker').style.display='none';}
+
+function manualLoc(lat,lon,name){
+  uLat=lat;uLon=lon;
+  document.getElementById('cityPicker').style.display='none';
+  toast(`מיקום נבחר: ${name}`);
+  findShelters();
+}
+
+function showCityPicker(){
+  document.getElementById('cityPicker').style.display='block';
+}
 function hav(a,b,c,d){const R=6371000,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 
 function resetApp(){
@@ -498,7 +537,7 @@ async function findShelters(){
 
     display();
   }catch(e){
-    if(e.message==='no-geo'||e.code===1)showMsg('⚠️ לא ניתן לאתר מיקום','אפשרו גישה למיקום בהגדרות הדפדפן.');
+    if(e.message==='no-geo'||e.code===1||e.code===2||e.code===3){showMsg('⚠️ לא ניתן לאתר מיקום אוטומטית','בחרו עיר מהרשימה למטה:');showCityPicker();}
     else if(e.message==='api')showMsg('⚠️ שגיאת שרת','לא ניתן לגשת ל-OpenStreetMap. נסו שוב.');
     else{showMsg('⚠️ שגיאה','משהו השתבש. נסו שוב.');console.error(e);}
   }finally{btn.classList.remove('ld');}
